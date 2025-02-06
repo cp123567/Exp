@@ -17,7 +17,7 @@ jobs:
           ls -la  # Verify file existence
 
       - name: Upload build artifact (output.txt)
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: build-artifacts
           path: output.txt
@@ -27,7 +27,7 @@ jobs:
     needs: build  # Ensure deploy runs after build job
     steps:
       - name: Download build artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: build-artifacts
           path: ./deployed-files  # Store in a directory
