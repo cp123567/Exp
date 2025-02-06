@@ -27,51 +27,16 @@ jobs:
 
   deploy:
     runs-on: ubuntu-latest
-    needs: build
+    needs: build  # Ensures that the deploy job runs after the build job finishes successfully
     steps:
-      - name: Download build artifacts
+      - name: Download build artifact
         uses: actions/download-artifact@v4
         with:
           name: build-artifacts
-          path: ./deployed-files
 
-      - name: Debug: Verify downloaded artifacts
+      - name: Deploy to server (example)
         run: |
-          ls -la ./deployed-files
-          cat ./deployed-files/output.txt || echo "output.txt not found!"
-
-      - name: Install SSH client
-        run: sudo apt-get install -y openssh-client
-
-      - name: Setup SSH Connection
-        env:
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-          SERVER_USER: ${{ secrets.SERVER_USER }}
-          SERVER_HOST: ${{ secrets.SERVER_HOST }}
-        run: |
-          echo "Configuring SSH..."
-          mkdir -p ~/.ssh
-          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H "$SERVER_HOST" >> ~/.ssh/known_hosts
-          echo "SSH setup complete."
-
-      - name: Test SSH Connection
-        env:
-          SERVER_USER: ${{ secrets.SERVER_USER }}
-          SERVER_HOST: ${{ secrets.SERVER_HOST }}
-        run: ssh -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_HOST "echo SSH connection successful"
-
-      - name: Deploy to server
-        env:
-          SERVER_USER: ${{ secrets.SERVER_USER }}
-          SERVER_HOST: ${{ secrets.SERVER_HOST }}
-          SERVER_PATH: "/path/to/deploy"
-        run: |
-          echo "Creating deployment directory..."
-          ssh $SERVER_USER@$SERVER_HOST "mkdir -p $SERVER_PATH"
-
-          echo "Transferring files..."
-          scp ./deployed-files/output.txt $SERVER_USER@$SERVER_HOST:$SERVER_PATH
-
-          echo "Deployment completed successfully!"
+          echo "Deploying application..."
+          # Add your deployment steps here, like copying files to a server
+          # Example: rsync, scp, or any deployment script you use
+          # scp -r ./your-app user@your-server:/path/to/deploy
