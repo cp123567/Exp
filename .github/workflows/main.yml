@@ -16,6 +16,9 @@ jobs:
           echo "Hello, this is the build output." > output.txt
           ls -la  # Verify file existence
 
+      - name: Debug: Verify output.txt
+        run: cat output.txt
+
       - name: Upload build artifact (output.txt)
         uses: actions/upload-artifact@v4
         with:
@@ -24,33 +27,51 @@ jobs:
 
   deploy:
     runs-on: ubuntu-latest
-    needs: build  # Ensure deploy runs after build job
+    needs: build
     steps:
       - name: Download build artifacts
         uses: actions/download-artifact@v4
         with:
           name: build-artifacts
-          path: ./deployed-files  # Store in a directory
+          path: ./deployed-files
 
-      - name: Verify downloaded artifacts
-        run: ls -la ./deployed-files && cat ./deployed-files/output.txt
+      - name: Debug: Verify downloaded artifacts
+        run: |
+          ls -la ./deployed-files
+          cat ./deployed-files/output.txt || echo "output.txt not found!"
 
       - name: Install SSH client
         run: sudo apt-get install -y openssh-client
 
-      - name: Deploy to server
+      - name: Setup SSH Connection
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
           SERVER_USER: ${{ secrets.SERVER_USER }}
           SERVER_HOST: ${{ secrets.SERVER_HOST }}
-          SERVER_PATH: "/path/to/deploy"
         run: |
-          echo "Setting up SSH..."
+          echo "Configuring SSH..."
           mkdir -p ~/.ssh
           echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H "$SERVER_HOST" >> ~/.ssh/known_hosts
+          echo "SSH setup complete."
 
-          echo "Deploying application..."
+      - name: Test SSH Connection
+        env:
+          SERVER_USER: ${{ secrets.SERVER_USER }}
+          SERVER_HOST: ${{ secrets.SERVER_HOST }}
+        run: ssh -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_HOST "echo SSH connection successful"
+
+      - name: Deploy to server
+        env:
+          SERVER_USER: ${{ secrets.SERVER_USER }}
+          SERVER_HOST: ${{ secrets.SERVER_HOST }}
+          SERVER_PATH: "/path/to/deploy"
+        run: |
+          echo "Creating deployment directory..."
+          ssh $SERVER_USER@$SERVER_HOST "mkdir -p $SERVER_PATH"
+
+          echo "Transferring files..."
           scp ./deployed-files/output.txt $SERVER_USER@$SERVER_HOST:$SERVER_PATH
+
           echo "Deployment completed successfully!"
