@@ -11,28 +11,41 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Run as a sample job
-        run: echo hello world
+        run: echo "Hello, world! Running the build process..."
 
-      # Upload build artifacts (e.g., a compiled file, report, etc.)
+      # Ensure build output directory exists (modify as per actual build process)
+      - name: Create build output directory (if needed)
+        run: mkdir -p ./build-output
+
       - name: Upload build artifacts
         uses: actions/upload-artifact@v3
         with:
           name: build-artifacts
-          path: ./your-build-output-directory  # Replace with the actual path of your build artifacts
+          path: ./build-output  # Ensure this is correct
 
   deploy:
     runs-on: ubuntu-latest
-    needs: build  # Ensures that deploy runs after build job finishes successfully
+    needs: build  # Ensures deployment runs after build job succeeds
     steps:
-      - uses: actions/checkout@v4  # Optional, to pull code for deployment
       - name: Download build artifacts
         uses: actions/download-artifact@v3
         with:
           name: build-artifacts
-          
-      - name: Deploy to server (example)
+          path: ./deployed-files  # Specify where to download artifacts
+
+      - name: Verify downloaded artifacts
+        run: ls -la ./deployed-files
+
+      - name: Deploy to server
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SERVER_USER: ${{ secrets.SERVER_USER }}
+          SERVER_HOST: ${{ secrets.SERVER_HOST }}
+          SERVER_PATH: "/path/to/deploy"
         run: |
-          echo "Deploying application..."
-          # Deploy your application using the downloaded artifacts
-          # Example: scp, rsync, or any deployment script you use
-          # scp -r ./downloaded-artifact/* user@your-server:/path/to/deploy
+          echo "Starting deployment..."
+          mkdir -p ~/.ssh
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          scp -r ./deployed-files/* $SERVER_USER@$SERVER_HOST:$SERVER_PATH
+          echo "Deployment completed successfully!"
