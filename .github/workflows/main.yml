@@ -13,16 +13,26 @@ jobs:
       - name: Run as a sample job
         run: echo hello world
 
+      # Upload build artifacts (e.g., a compiled file, report, etc.)
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-artifacts
+          path: ./your-build-output-directory  # Replace with the actual path of your build artifacts
+
   deploy:
     runs-on: ubuntu-latest
-    needs: build  # Ensures that the deploy job runs after the build job finishes successfully
+    needs: build  # Ensures that deploy runs after build job finishes successfully
     steps:
-      - uses: actions/checkout@v4  # Optional, if you need to pull code for deployment
+      - uses: actions/checkout@v4  # Optional, to pull code for deployment
+      - name: Download build artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: build-artifacts
+          
       - name: Deploy to server (example)
         run: |
           echo "Deploying application..."
-          # Add your deployment steps here, like copying files to a server
-          # Example: rsync, scp, or any deployment script you use
-          # scp -r ./your-app user@your-server:/path/to/deploy
-
-
+          # Deploy your application using the downloaded artifacts
+          # Example: scp, rsync, or any deployment script you use
+          # scp -r ./downloaded-artifact/* user@your-server:/path/to/deploy
