@@ -16,7 +16,7 @@ jobs:
           echo "Hello, this is the build output." > output.txt
           ls -la  # Verify file existence
 
-      - name: Debug: Verify output.txt
+      - name: Debug output.txt
         run: cat output.txt
 
       - name: Upload build artifact (output.txt)
